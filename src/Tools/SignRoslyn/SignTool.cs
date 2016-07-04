@@ -36,29 +36,16 @@ namespace SignRoslyn
 
         private void Sign(IEnumerable<string> filePaths)
         {
-            EnsureBuildFile();
-
             var commandLine = new StringBuilder();
             commandLine.Append(@"/v:m /target:RoslynSign ");
-            commandLine.Append($@"/p:SignIntermediatesDir=""{Path.GetTempPath()}"" ");
-            commandLine.Append($@"/p:SignOutDir=""{_binariesPath}"" ");
-
-            commandLine.Append($@"/p:FilesToSign=""");
-            var first = true;
-            foreach (var filePath in filePaths)
-            {
-                if (!first)
-                {
-                    commandLine.Append(";");
-                    first = false;
-                }
-
-                commandLine.Append(filePath);
-            }
             commandLine.Append(@""" ");
             commandLine.Append(Path.GetFileName(_buildFilePath));
-
             Console.WriteLine($"msbuild.exe {commandLine.ToString()}");
+
+            var content = GenerateBuildFileContent(filePaths);
+            File.WriteAllText(_buildFilePath, content);
+            Console.WriteLine("Generated project file");
+            Console.WriteLine(content);
 
             var startInfo = new ProcessStartInfo()
             {
@@ -79,21 +66,7 @@ namespace SignRoslyn
             }
         }
 
-        private void EnsureBuildFile()
-        {
-            if (!_generatedBuildFile)
-            {
-                GenerateBuildFile();
-                _generatedBuildFile = true;
-            }
-        }
-
-        private void GenerateBuildFile()
-        {
-            File.WriteAllText(_buildFilePath, GenerateBuildFileContent());
-        }
-
-        private string GenerateBuildFileContent()
+        private string GenerateBuildFileContent(IEnumerable<string> filesToSign)
         {
             var builder = new StringBuilder();
             builder.AppendLine(@"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -103,13 +76,27 @@ namespace SignRoslyn
 
             builder.AppendLine($@"
     <Import Project=""$(NuGetPackageRoot)\MicroBuild.Core\0.2.0\build\MicroBuild.Core.props"" />
-    <Import Project=""$(NuGetPackageRoot)\MicroBuild.Core\0.2.0\build\MicroBuild.Core.targets"" />
+    <Import Project=""$(NuGetPackageRoot)\MicroBuild.Core\0.2.0\build\MicroBuild.Core.targets"" />");
 
+            builder.Append($@"    <ItemGroup>");
+
+            foreach (var fileToSign in filesToSign)
+            {
+                builder.Append($@"
+        <FilesToSign Include=""{fileToSign}"">
+          <Authenticode>$(AuthenticodeCertificateName)</Authenticode>
+          <StrongName>MsSharedLib72</StrongName>
+        </FilesToSign>");
+            }
+
+            builder.Append($@"    </ItemGroup>");
+
+            builder.AppendLine($@"
     <Target Name=""RoslynSign"">
 
         <SignFiles Files=""@(FilesToSign)""
                    BinariesDirectory=""{_binariesPath}""
-                   IntermediatesDirectory=""$(SignIntermediatesDir)""
+                   IntermediatesDirectory=""{Path.GetTempPath()}""
                    Type=""real"" />
     </Target>
 </Project>");
