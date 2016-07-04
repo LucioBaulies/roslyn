@@ -101,14 +101,14 @@ namespace SignRoslyn
 
             builder.AppendLine($@"    <Import Project=""{Path.Combine(_sourcePath, @"build\Targets\VSL.Settings.targets")}"" />");
 
-            builder.AppendLine(@"
+            builder.AppendLine($@"
     <Import Project=""$(NuGetPackageRoot)\MicroBuild.Core\0.2.0\build\MicroBuild.Core.props"" />
     <Import Project=""$(NuGetPackageRoot)\MicroBuild.Core\0.2.0\build\MicroBuild.Core.targets"" />
 
     <Target Name=""RoslynSign"">
 
         <SignFiles Files=""@(FilesToSign)""
-                   BinariesDirectory=""$(SignOutDir)""
+                   BinariesDirectory=""{_binariesPath}""
                    IntermediatesDirectory=""$(SignIntermediatesDir)""
                    Type=""real"" />
     </Target>
