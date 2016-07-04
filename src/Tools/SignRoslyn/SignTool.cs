@@ -16,13 +16,15 @@ namespace SignRoslyn
         private readonly string _binariesPath;
         private readonly string _sourcePath;
         private readonly string _buildFilePath;
+        private readonly string _runPath;
         private bool _generatedBuildFile;
 
-        internal SignTool(string runDir, string binariesPath, string sourcePath)
+        internal SignTool(string runPath, string binariesPath, string sourcePath)
         {
             _binariesPath = binariesPath;
             _sourcePath = sourcePath;
-            _buildFilePath = Path.Combine(runDir, "build.proj");
+            _buildFilePath = Path.Combine(runPath, "build.proj");
+            _runPath = runPath;
 
             var path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
             _msbuildPath = Path.Combine(path, @"MSBuild\14.0\Bin\MSBuild.exe");
@@ -53,14 +55,16 @@ namespace SignRoslyn
 
                 commandLine.Append(filePath);
             }
-            commandLine.Append(@"""");
+            commandLine.Append(@""" ");
+            commandLine.Append(Path.GetFileName(_buildFilePath));
 
             var startInfo = new ProcessStartInfo()
             {
                 FileName = _msbuildPath,
                 Arguments = commandLine.ToString(),
                 UseShellExecute = false,
-                RedirectStandardOutput = true
+                RedirectStandardOutput = true,
+                WorkingDirectory = _runPath,
             };
 
             var process = Process.Start(startInfo);
