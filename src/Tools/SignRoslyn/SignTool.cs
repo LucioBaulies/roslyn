@@ -58,6 +58,8 @@ namespace SignRoslyn
             commandLine.Append(@""" ");
             commandLine.Append(Path.GetFileName(_buildFilePath));
 
+            Console.WriteLine($"msbuild.exe {commandLine.ToString()}");
+
             var startInfo = new ProcessStartInfo()
             {
                 FileName = _msbuildPath,
