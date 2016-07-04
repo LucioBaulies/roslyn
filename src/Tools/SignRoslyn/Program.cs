@@ -17,8 +17,8 @@ namespace SignRoslyn
             var sourcePath = @"e:\dd\roslyn";
             */
 
-            var binariesPath = Environment.GetEnvironmentVariable("BUILD_BINARIESDIRECTORY");
             var sourcePath = Environment.GetEnvironmentVariable("BUILD_SOURCESDIRECTORY");
+            var binariesPath = Path.Combine(sourcePath, @"Binaries\Release");
 
             var filePath = Path.Combine(AppContext.BaseDirectory, "BinaryData.json");
             using (var file = File.OpenText(filePath))
